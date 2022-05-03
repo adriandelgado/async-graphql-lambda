@@ -2,9 +2,11 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 #![allow(clippy::module_name_repetitions)]
+#![allow(clippy::implicit_return)]
+#![allow(clippy::missing_inline_in_public_items)]
 
-/// Macro for converting a `lambda_http::Request`, into a GraphQLRequest or
-/// GraphQLBatchRequest which returns early in the case of errors. The difference
+/// Macro for converting a `lambda_http::Request`, into a `GraphQLRequest` or
+/// `GraphQLBatchRequest` which returns early in the case of errors. The difference
 /// between this macro with the `?` operator is that the early return is an
 /// `Ok(http::Response)` with better formatting than just throwing an error.
 #[macro_export]
