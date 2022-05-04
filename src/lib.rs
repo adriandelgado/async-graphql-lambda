@@ -2,8 +2,6 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 #![allow(clippy::module_name_repetitions)]
-#![allow(clippy::implicit_return)]
-#![allow(clippy::missing_inline_in_public_items)]
 
 /// Macro for converting a `lambda_http::Request`, into a `GraphQLRequest` or
 /// `GraphQLBatchRequest` which returns early in the case of errors. The difference

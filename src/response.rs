@@ -3,10 +3,11 @@ use lambda_http::{
     Body, IntoResponse, Response,
 };
 
-/// Responder for a GraphQL response.
+/// Wrapper around `async-graphql::Response` that implements `lambda_http::IntoResponse`
+/// so it can be returned from a `service_fn` in `lambda_http`.
 ///
-/// This contains a batch response, but since regular responses are a type of batch response it
-/// works for both.
+/// This contains a batch response, but since regular responses are a type of
+/// batch response it works for both.
 #[derive(Debug)]
 pub struct GraphQLResponse(pub async_graphql::BatchResponse);
 

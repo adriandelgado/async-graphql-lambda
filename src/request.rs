@@ -1,10 +1,9 @@
 use crate::{error::GraphQLError, GraphQLResponse};
 use async_graphql::{ObjectType, Schema, SubscriptionType};
-use lambda_http::{
-    ext::RequestExt, http::Method, request::RequestContext, Body, Request as LambdaRequest,
-};
+use lambda_http::{ext::RequestExt, http::Method, request::RequestContext, Body};
 
-/// Extractor for GraphQL request.
+/// Wrapper around `async-graphql::Request` which can be obtained from a
+/// `lambda_http::Request`.
 #[derive(Debug)]
 pub struct GraphQLRequest(pub async_graphql::Request);
 
@@ -30,7 +29,8 @@ impl GraphQLRequest {
     }
 }
 
-/// Extractor for GraphQL batch request.
+/// Wrapper around `async-graphql::BatchRequest` which can be obtained from a
+/// `lambda_http::Request`.
 #[derive(Debug)]
 pub struct GraphQLBatchRequest(pub async_graphql::BatchRequest);
 
@@ -56,10 +56,10 @@ impl GraphQLBatchRequest {
     }
 }
 
-impl TryFrom<LambdaRequest> for GraphQLRequest {
+impl TryFrom<lambda_http::Request> for GraphQLRequest {
     type Error = GraphQLError;
 
-    fn try_from(req: LambdaRequest) -> Result<Self, Self::Error> {
+    fn try_from(req: lambda_http::Request) -> Result<Self, Self::Error> {
         Ok(Self(
             GraphQLBatchRequest::try_from(req)?
                 .into_inner()
@@ -68,10 +68,10 @@ impl TryFrom<LambdaRequest> for GraphQLRequest {
     }
 }
 
-impl TryFrom<LambdaRequest> for GraphQLBatchRequest {
+impl TryFrom<lambda_http::Request> for GraphQLBatchRequest {
     type Error = GraphQLError;
 
-    fn try_from(request: LambdaRequest) -> Result<Self, Self::Error> {
+    fn try_from(request: lambda_http::Request) -> Result<Self, Self::Error> {
         match (request.method(), request.body()) {
             (&Method::GET, _) => {
                 let req = query_to_request(&request)?;
@@ -93,7 +93,7 @@ impl TryFrom<LambdaRequest> for GraphQLBatchRequest {
     }
 }
 
-fn query_to_request(req: &LambdaRequest) -> Result<async_graphql::Request, GraphQLError> {
+fn query_to_request(req: &lambda_http::Request) -> Result<async_graphql::Request, GraphQLError> {
     let query_map = req.query_string_parameters();
     let query = match req.request_context() {
         // API Gateway Payload Version 2.0 doesn't follow spec.
