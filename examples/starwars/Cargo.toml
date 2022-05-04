@@ -1,0 +1,17 @@
+[package]
+name = "starwars"
+version = "0.1.0"
+edition = "2021"
+authors = ["adrian <rust@adrianjdelgado.com>"]
+
+
+[dependencies]
+lambda_http = "0.5.1"
+tokio = { version = "1.17.0", features = ["rt-multi-thread", "macros"] }
+tracing = "0.1.32"
+tracing-subscriber = "0.3.9"
+async-graphql = { git = "https://github.com/async-graphql/async-graphql" }
+async-graphql-lambda = { path = "../../" }
+
+# For the starwars model
+slab = "0.4.6"
