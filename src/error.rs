@@ -1,4 +1,7 @@
-use lambda_http::{http, http::StatusCode, Body, IntoResponse, Response};
+use lambda_http::{
+    http::{header::CONTENT_TYPE, HeaderValue, StatusCode},
+    Body, IntoResponse, Response,
+};
 use serde::Serialize;
 use thiserror::Error;
 
@@ -8,6 +11,8 @@ pub enum GraphQLError {
     EmptyBody,
     #[error("error while reading query")]
     QueryError,
+    #[error("only GET and POST requests are allowed")]
+    MethodNotAllowed,
     #[error(transparent)]
     JsonError(#[from] serde_json::Error),
     #[error(transparent)]
@@ -19,6 +24,7 @@ impl GraphQLError {
         match self {
             GraphQLError::EmptyBody => "EmptyBody",
             GraphQLError::QueryError => "QueryError",
+            GraphQLError::MethodNotAllowed => "MethodNotAllowed",
             GraphQLError::JsonError(e) => type_name_of_val(e),
             GraphQLError::ParseError(e) => type_name_of_val(e),
         }
@@ -43,11 +49,18 @@ struct LambdaError {
 
 impl IntoResponse for GraphQLError {
     fn into_response(self) -> lambda_http::Response<Body> {
-        Response::builder()
-            .header(http::header::CONTENT_TYPE, "application/json")
-            .status(StatusCode::BAD_REQUEST)
-            .body(self.to_body())
-            .expect("unable to build http::Response")
+        let mut response = Response::new(self.to_body());
+        response
+            .headers_mut()
+            .insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+
+        match self {
+            GraphQLError::MethodNotAllowed => {
+                *response.status_mut() = StatusCode::METHOD_NOT_ALLOWED;
+            }
+            _ => *response.status_mut() = StatusCode::BAD_REQUEST,
+        };
+        response
     }
 }
 

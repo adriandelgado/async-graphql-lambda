@@ -72,21 +72,23 @@ impl TryFrom<LambdaRequest> for GraphQLBatchRequest {
     type Error = GraphQLError;
 
     fn try_from(request: LambdaRequest) -> Result<Self, Self::Error> {
-        if request.method() == Method::GET {
-            let req = query_to_request(&request)?;
-            Ok(Self(async_graphql::BatchRequest::Single(req)))
-        } else {
-            match request.into_body() {
-                Body::Empty => Err(GraphQLError::EmptyBody),
-                Body::Text(text) => serde_json::from_str::<async_graphql::BatchRequest>(&text)
-                    .map_err(GraphQLError::JsonError)
-                    .map(Self),
-                Body::Binary(binary) => {
-                    serde_json::from_slice::<async_graphql::BatchRequest>(&binary)
-                        .map_err(GraphQLError::JsonError)
-                        .map(Self)
-                }
+        match (request.method(), request.body()) {
+            (&Method::GET, _) => {
+                let req = query_to_request(&request)?;
+                Ok(Self(async_graphql::BatchRequest::Single(req)))
             }
+            (&Method::POST, Body::Empty) => Err(GraphQLError::EmptyBody),
+            (&Method::POST, Body::Text(text)) => {
+                serde_json::from_str::<async_graphql::BatchRequest>(text)
+                    .map_err(GraphQLError::JsonError)
+                    .map(Self)
+            }
+            (&Method::POST, Body::Binary(binary)) => {
+                serde_json::from_slice::<async_graphql::BatchRequest>(binary)
+                    .map_err(GraphQLError::JsonError)
+                    .map(Self)
+            }
+            _ => Err(GraphQLError::MethodNotAllowed),
         }
     }
 }
